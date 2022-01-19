@@ -1,0 +1,12 @@
+---
+- name: "Golden Image Setup"
+  hosts: localhost
+  gather_facts: true
+  become: yes
+  become_method: sudo
+  roles:
+    - role: "install-common-software"
+    - role: "os"
+    - role: "docker"      
+    - role: "firewall"      
+      

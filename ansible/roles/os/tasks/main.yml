@@ -1,0 +1,30 @@
+---
+- block :
+  - name: Remove swapfile from /etc/fstab
+    mount:
+      name: swap
+      fstype: swap
+      state: absent
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+    tags: ['skip_ansible_lint']
+
+  - name: Move CA certs into trust location
+    command: mv /tmp/ca_certs.pem /etc/pki/ca-trust/source/anchors/ca_certs.pem
+
+  - name: install ca package on systems
+    yum:
+      name: ca-certificates
+      state: present
+
+  - name: update trusted ca redhat
+    shell: /bin/update-ca-trust
+
+  - name: Disable SELinux
+    selinux:
+      state: disabled
+
+
+  

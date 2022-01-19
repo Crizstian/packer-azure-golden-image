@@ -1,0 +1,83 @@
+---
+- block :
+    - name: Create docker group
+      group:
+        name: docker
+        gid: 5000
+        state: present
+
+    - name: Create docker user
+      user:
+        name: docker
+        uid: 5000
+        groups: docker
+        state: present
+
+    - name: Ensure docker directory
+      file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+
+    - name: Remove docker if installed from CentOS repo
+      yum:
+        name:
+          - docker
+          - docker-client
+          - docker-client-latest
+          - docker-common
+          - docker-latest
+          - docker-latest-logrotate
+          - docker-logrotate
+          - docker-engine
+        state: removed
+      when: 
+        - os_type == "rhel-7"
+
+    - name: Add docker-ce repo
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+      when: 
+        - os_type == "rhel-7"
+
+    - name: edit docker-ce.repo
+      replace:
+        path: /etc/yum.repos.d/docker-ce.repo
+        after: '\/\\\$basearch'
+        before: 'centos\/'
+        regexp: '(.+)'
+        replace: '7'
+
+    - name: Install Docker
+      yum:
+        name: "{{ docker_version }}"
+        state: present
+      when: 
+        - os_type == "rhel-7"
+
+    - name: docker config
+      copy:
+        content: |
+          {
+           "fixed-cidr": "192.168.50.1/24",
+           "bip": "192.168.50.1/24",
+           "log-opts": {
+             "max-size": "10m",
+             "max-file": "3"
+           }
+          }
+        dest: /etc/docker/daemon.json
+        mode: '0440'
+
+    - name: start docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: adding existing user platformsadmin to group sudo
+      user:
+        name: "{{ admin_username }}"
+        groups: docker
+        append: yes

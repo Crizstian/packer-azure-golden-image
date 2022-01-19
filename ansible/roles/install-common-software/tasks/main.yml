@@ -1,0 +1,22 @@
+---
+- block :
+  - name: Install Packages on RedHat distro
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - sysstat
+      - psmisc
+      - lsof
+      - mailx
+      - libselinux-python
+    when: 
+      - os_type == "rhel-7"
+
+  - name: Install yum utils
+    yum:
+      name: yum-utils
+      state: latest
+    when: 
+      - os_type == "rhel-7"
+  
